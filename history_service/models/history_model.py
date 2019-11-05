@@ -3,12 +3,11 @@ from history_service import db
 from sqlalchemy.dialects.postgresql import JSON
 
 
-
 class History(db.Model):
     __tablename__ = 'history'
 
     file_id = db.Column(db.Integer, primary_key=True)
-    filter_id = db.Column(db.Integer, db.ForeignKey('filter.id'), primary_key=True)
+    filter_id = db.Column(db.Integer, db.ForeignKey('filter.filter_id'), primary_key=True)
     user_id = db.Column(db.Integer, primary_key=True)
     rows_id = db.Column(JSON, nullable=False)
     filter_date = db.Column(db.DateTime, default=datetime.datetime.now())
