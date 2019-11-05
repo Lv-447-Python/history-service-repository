@@ -19,5 +19,5 @@ manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
 from history_service.views.view import HistoryResource
-from history_service.models.history_model import History
 from history_service.models.filter_model import Filter
+from history_service.models.history_model import History
