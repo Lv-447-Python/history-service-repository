@@ -9,7 +9,7 @@ app = Flask(__name__)
 api = Api(app)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2://postgres:07121997@127.0.0.1:5432/HistoryDB'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2://postgres:admin@127.0.0.1:5432/HistoryDB'
 
 
 db = SQLAlchemy(app)
