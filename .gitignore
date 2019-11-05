@@ -469,3 +469,4 @@ dmypy.json
 .vscode
 .vscode/
 .vscode/*
+migrations/
