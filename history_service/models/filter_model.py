@@ -6,7 +6,7 @@ class Filter(db.Model):
     __tablename__ = 'filter'
 
     filter_data = db.Column(JSON, nullable=False)
-    filter_id = db.Column(db.Integer, foreignkey=True)
+    filter_id = db.Column(db.Integer, primary_key=True)
 
     def __init__(self, filter_data, filter_id):
         self.filter_data = filter_data
