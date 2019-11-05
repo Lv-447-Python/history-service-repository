@@ -1,5 +1,6 @@
 from history_service import db
 from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.orm import relationship
 
 
 class Filter(db.Model):
@@ -7,6 +8,7 @@ class Filter(db.Model):
 
     filter_data = db.Column(JSON, nullable=False)
     filter_id = db.Column(db.Integer, primary_key=True)
+    history = db.relationship('History', backref='filter_id')
 
     def __init__(self, filter_data, filter_id):
         self.filter_data = filter_data
