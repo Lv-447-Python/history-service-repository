@@ -1,14 +1,14 @@
+import json
+from sqlalchemy import exc
+from flask import jsonify, request
+from flask_restful import Resource
+from flask_api import status
 from history_service import db
 from history_service import api
 from history_service.models.history_model import History
 from history_service.models.filter_model import Filter
 from history_service.serializers.filter_serializer import FilterSchema
 from history_service.serializers.history_serializer import HistorySchema
-from flask import jsonify, request
-from flask_restful import Resource
-from flask_api import status
-import json
-from sqlalchemy import exc
 
 
 class FilterResource(Resource):
@@ -20,7 +20,7 @@ class FilterResource(Resource):
                 filter_data = Filter.query.filter_by(**filter_args).first_or_404()
                 filter_serializer = FilterSchema()
                 return jsonify({'filter': filter_serializer.dump(filter_data)})
-            except exc.SQLAlchemyError as err:
+            except exc.SQLAlchemyError:
                 return status.HTTP_400_BAD_REQUEST
         return status.HTTP_400_BAD_REQUEST
 
@@ -31,7 +31,7 @@ class FilterResource(Resource):
             loaded_filter = filter_serializer.load(post_data_from_history_resources['filter'])
             # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html#sqlalchemy.dialects.postgresql.JSON.Comparator.astext
             if not Filter.query.filter(Filter.filter_data['filter_data'].astext == json.dumps(loaded_filter['filter_data'])).first():
-                new_filter = Filter(loaded_filter)
+                new_filter = Filter(loaded_filter['filter_data'])
                 db.session.add(new_filter)
                 db.session.commit()
             return status.HTTP_201_CREATED
@@ -44,10 +44,10 @@ class HistoryResource(Resource):
         request_args = request.args
         if set(request_args.keys()).issubset({'user_id', 'file_id', 'filter'}):
             try:
-                history_data = History.query.filter_by(**{key: int(request_args[key]) for key in request_args}).all()
+                history_data = History.query.filter_by(**request_args).all()
                 history_serializer = HistorySchema()
                 return jsonify({'history': [history_serializer.dump(record) for record in history_data]})
-            except exc.SQLAlchemyError as err:
+            except exc.SQLAlchemyError:
                 return status.HTTP_400_BAD_REQUEST
         return status.HTTP_400_BAD_REQUEST
 
