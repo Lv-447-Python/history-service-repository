@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import JSON
 class Filter(db.Model):
     __tablename__ = 'filter'
 
-    filter_data = db.Column(JSON, nullable=False)
+    filter_data = db.Column(db.String, nullable=False)
     filter_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     def __init__(self, filter_data):

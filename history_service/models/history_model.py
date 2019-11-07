@@ -10,7 +10,7 @@ class History(db.Model):
     filter_id = db.Column(db.Integer, db.ForeignKey(
         'filter.filter_id'), primary_key=True)
     user_id = db.Column(db.Integer, primary_key=True)
-    rows_id = db.Column(JSON, nullable=False)
+    rows_id = db.Column(db.String, nullable=False)
     filter_date = db.Column(db.DateTime, default=datetime.datetime.now())
 
     def __init__(self, file_id, filter_id, user_id, rows_id):

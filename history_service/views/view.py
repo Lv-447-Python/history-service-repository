@@ -1,5 +1,4 @@
 import json
-import requests
 from sqlalchemy import exc
 from flask import jsonify, request
 from flask_restful import Resource
@@ -13,43 +12,27 @@ from history_service.serializers.filter_serializer import FilterSchema
 from history_service.serializers.history_serializer import HistorySchema
 
 
-class FilterResource(Resource):
-
-    def get(self):
-        filter_args = request.args
-        if set(filter_args.keys()).issubset({'filter_id'}):
-            try:
-                filter_data = Filter.query.filter_by(**filter_args).first_or_404()
-                filter_serializer = FilterSchema()
-                return jsonify({'filter': filter_serializer.dump(filter_data)})
-            except exc.SQLAlchemyError:
-                return status.HTTP_400_BAD_REQUEST
-        return status.HTTP_400_BAD_REQUEST
-
-    def post(self):
-        post_data_from_history_resources = request.get_json()
-        if set(post_data_from_history_resources.keys()) == {'filter'}:
-            filter_serializer = FilterSchema()
-            loaded_filter = filter_serializer.load(post_data_from_history_resources['filter'])
-            # https://docs.sqlalchemy.org/en/13/dialects/postgresql.html#sqlalchemy.dialects.postgresql.JSON.Comparator.astext
-            if not Filter.query.filter(Filter.filter_data['filter_data'].astext == json.dumps(loaded_filter['filter_data'])).first():
-                new_filter = Filter(loaded_filter['filter_data'])
-                db.session.add(new_filter)
-                db.session.commit()
-            return status.HTTP_201_CREATED
-        return status.HTTP_400_BAD_REQUEST
-
-
 class HistoryResource(Resource):
 
     @staticmethod
     def get_filter_by_history_record(history_record):
         filter_id = history_record.pop('filter_id')
-        filter = requests.get(f'http://localhost:5000/filter?filter_id={filter_id}')
-        if filter.status_code == 200:
-            history_record.update(filter.json())
-        else:
-            raise InternalServerError
+        filter_data = Filter.query.filter_by(filter_id=filter_id).first_or_404()
+        filter_serializer = FilterSchema()
+        history_record.update({'filter': filter_serializer.dump(filter_data)})
+
+    @staticmethod
+    def create_filter_and_return_id(filter_data):
+        filter_str = json.dumps(filter_data['filter_data'])
+        filter_serializer = FilterSchema()
+        loaded_filter = filter_serializer.load({'filter_data': filter_str})
+        find_same_filter = Filter.query.filter_by(filter_data=filter_str).first()
+        if not find_same_filter:
+            db.session.add(loaded_filter)
+            db.session.commit()
+            new_filter = Filter.query.order_by(Filter.filter_id.desc()).first()
+            return new_filter.filter_id
+        return find_same_filter.filter_id
 
     def get(self):
         request_args = request.args
@@ -67,12 +50,21 @@ class HistoryResource(Resource):
         return status.HTTP_400_BAD_REQUEST
 
     def post(self):
-        filter_data = request.get_json()
-        if filter_data:
-            if set(filter_data.keys()) == {'user_id', 'file_id', 'filter', 'rows_id'}:
-                pass
+        history_data = request.get_json()
+        if set(history_data.keys()) == {'user_id', 'file_id', 'filter', 'rows_id'}:
+            try:
+                history_data['filter_id'] = self.create_filter_and_return_id(history_data.pop('filter'))
+                history_data['rows_id'] = json.dumps(history_data['rows_id'])
+                history_serializer = HistorySchema()
+                loaded_history = history_serializer.load(history_data)
+                db.session.add(loaded_history)
+                db.session.commit()
+                return status.HTTP_201_CREATED
+            except exc.SQLAlchemyError:
+                return status.HTTP_409_CONFLICT
+            except InternalServerError:
+                return status.HTTP_500_INTERNAL_SERVER_ERROR
         return status.HTTP_400_BAD_REQUEST
 
 
 api.add_resource(HistoryResource, '/history')
-api.add_resource(FilterResource, '/filter')
