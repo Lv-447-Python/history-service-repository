@@ -3,7 +3,6 @@ from sqlalchemy import exc
 from flask import jsonify, request
 from flask_restful import Resource
 from flask_api import status
-from werkzeug.exceptions import InternalServerError
 from history_service import db
 from history_service import api
 from history_service.models.history_model import History
@@ -20,6 +19,7 @@ class HistoryResource(Resource):
         filter_data = Filter.query.filter_by(filter_id=filter_id).first_or_404()
         filter_serializer = FilterSchema()
         history_record.update({'filter': filter_serializer.dump(filter_data)})
+        history_record['filter']['filter_data'] = json.loads(history_record['filter']['filter_data'])
 
     @staticmethod
     def create_filter_and_return_id(filter_data):
@@ -44,6 +44,7 @@ class HistoryResource(Resource):
                 if dumped_history:
                     for record in dumped_history:
                         self.get_filter_by_history_record(record)
+                        record['rows_id'] = json.loads(record['rows_id'])
                 return jsonify({'history': dumped_history})
             except exc.SQLAlchemyError:
                 return status.HTTP_400_BAD_REQUEST
@@ -62,8 +63,6 @@ class HistoryResource(Resource):
                 return status.HTTP_201_CREATED
             except exc.SQLAlchemyError:
                 return status.HTTP_409_CONFLICT
-            except InternalServerError:
-                return status.HTTP_500_INTERNAL_SERVER_ERROR
         return status.HTTP_400_BAD_REQUEST
 
 
