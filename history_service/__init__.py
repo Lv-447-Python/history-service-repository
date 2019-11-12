@@ -1,3 +1,4 @@
+import logging
 from flask import Flask
 from flask_restful import Api
 from flask_marshmallow import Marshmallow
@@ -18,6 +19,8 @@ migrate = Migrate(app, db)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
-from history_service.views.view import HistoryResource
-from history_service.models.filter_model import Filter
-from history_service.models.history_model import History
+logger = logging.basicConfig(level=logging.DEBUG)
+
+
+from history_service.views.history_view import HistoryResource
+from history_service.views.filter_view import FilterResource
