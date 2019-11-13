@@ -1,6 +1,6 @@
 import json
 import requests
-from flask import jsonify, request
+from flask import request
 from flask_restful import Resource
 from flask_api import status
 from marshmallow.exceptions import ValidationError
@@ -26,51 +26,50 @@ class HistoryResource(Resource):
             'file_id': request.args.get('file_id', type=int),
             'filter_id': request.args.get('filter_id', type=int)
         }
-        history_objects = History.query.filter_by(**{field: value for field, value in history_data.items() if value}).all()
+        not_empty_fields = {field: value for field, value in history_data.items() if value}
+        history_objects = History.query.filter_by(**not_empty_fields).all()
         if history_objects:
             history = [HistoryResource.dump_history_object(history_object) for history_object in history_objects]
             return jsonify_data(history, '', status.HTTP_200_OK)
-        return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
+        return jsonify_data({}, 'History method get: invalid input data!', status.HTTP_400_BAD_REQUEST)
 
     def post(self):
         history_record = request.get_json()
 
-        if history_record:
+        try:
+            history = {
+                'user_id': history_record['user_id'],
+                'file_id': history_record['file_id'],
+                'rows_id': json.dumps(history_record['rows_id'])
+            }
+            filter = {'filter_data': history_record['filter_data']}
+        except KeyError as key_error:
+            app.logger.exception(key_error)
+            return jsonify_data({}, 'History method post: invalid input json!', status.HTTP_400_BAD_REQUEST)
+
+        new_filter = requests.post('http://127.0.0.1:5000/filter', json=filter)
+
+        if new_filter.status_code == 200:
+            response = new_filter.json()
+            # marshmallow.exceptions.ValidationError: {'filter_id': ['Unknown field.']}
+            # history['filter_id'] = response['data']
+            history_serializer = HistorySchema()
             try:
-                history = {
-                    'user_id': history_record['user_id'],
-                    'file_id': history_record['file_id'],
-                    'rows_id': json.dumps(history_record['rows_id'])
-                }
-                filter = {'filter_data': history_record['filter_data']}
-            except KeyError:
-                app.logger.exception()
-                return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
+                history_object = history_serializer.load(history)
+            except ValidationError as validation_error:
+                app.logger.exception(validation_error)
+                return jsonify_data({}, 'History method post: serialization error!', status.HTTP_400_BAD_REQUEST)
 
-            new_filter = requests.post('http://127.0.0.1:5000/filter', json=filter)
+            history_object.filter_id = response['data']['filter_id']
+            # write condition for primary key unique constraint (if PK is already exist)
 
-            if new_filter.status_code == 200:
-                response = new_filter.json()
-                # marshmallow.exceptions.ValidationError: {'filter_id': ['Unknown field.']}
-                # history['filter_id'] = response['data']
-                history_serializer = HistorySchema()
-                try:
-                    history_object = history_serializer.load(history)
-                except ValidationError:
-                    app.logger.exception()
-                    return status.HTTP_400_BAD_REQUEST
-                history_object.filter_id = response['data']['filter_id']
-                # primary key unique constraint (key is already existed)
-                history_object.save()
-                new_history = HistoryResource.dump_history_object(history_object)
-                return jsonify_data(new_history, '', status.HTTP_200_OK)
+            history_object.save()
+            new_history = HistoryResource.dump_history_object(history_object)
+            return jsonify_data(new_history, '', status.HTTP_200_OK)
 
-        return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
+        return jsonify_data({}, 'History method post: invalid input data!', status.HTTP_400_BAD_REQUEST)
 
     def delete(self):
-        pass
-
-    def put(self):
         pass
 
 

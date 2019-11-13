@@ -33,30 +33,30 @@ class FilterResource(Resource):
             if filter_object:
                 filter = FilterResource.dump_filter_object(filter_object)
                 return jsonify_data(filter, '', status.HTTP_200_OK)
-        return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
+        return jsonify_data({}, 'Filter method get: invalid input data!', status.HTTP_400_BAD_REQUEST)
 
     def post(self):
         filter = request.get_json()
-        if filter:
-            try:
-                filter['filter_data'] = json.dumps(filter['filter_data'])
-            except KeyError as error:
-                app.logger.exception()
-                return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
-            filter_serializer = FilterSchema()
-            try:
-                filter_object = filter_serializer.load(filter)
-            except ValidationError:
-                app.logger.exception()
-                return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
-            existing_filter = Filter.query.filter_by(filter_data=filter_object.filter_data).first()
-            if not existing_filter:
-                filter_object.save()
-                new_filter = FilterResource.dump_filter_object(filter_object)
-                return jsonify_data(new_filter, '', status.HTTP_200_OK)
-            new_filter = FilterResource.dump_filter_object(existing_filter)
+        try:
+            filter['filter_data'] = json.dumps(filter['filter_data'])
+        except KeyError as key_error:
+            app.logger.exception(key_error)
+            return jsonify_data({}, 'Filter method post: invalid input json!', status.HTTP_400_BAD_REQUEST)
+
+        filter_serializer = FilterSchema()
+        try:
+            filter_object = filter_serializer.load(filter)
+        except ValidationError as validation_error:
+            app.logger.exception(validation_error)
+            return jsonify_data({}, 'Filter method post: serialization error!', status.HTTP_400_BAD_REQUEST)
+        existing_filter = Filter.query.filter_by(filter_data=filter_object.filter_data).first()
+
+        if not existing_filter:
+            filter_object.save()
+            new_filter = FilterResource.dump_filter_object(filter_object)
             return jsonify_data(new_filter, '', status.HTTP_200_OK)
-        return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
+        new_filter = FilterResource.dump_filter_object(existing_filter)
+        return jsonify_data(new_filter, '', status.HTTP_200_OK)
 
     def delete(self):
         filter_id = request.args.get('filter_id', type=int)
@@ -66,7 +66,7 @@ class FilterResource(Resource):
                 filter_object.delete()
                 filter = FilterResource.dump_filter_object(filter_object)
                 return jsonify_data(filter, '', status.HTTP_200_OK)
-        return jsonify_data({}, 'Invalid input data!', status.HTTP_400_BAD_REQUEST)
+        return jsonify_data({}, 'Filter method delete: invalid input data!', status.HTTP_400_BAD_REQUEST)
 
 
 api.add_resource(FilterResource, '/filter')
