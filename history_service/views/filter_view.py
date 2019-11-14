@@ -26,6 +26,12 @@ class FilterResource(Resource):
         filter['filter_data'] = json.loads(filter['filter_data'])
         return filter
 
+    @staticmethod
+    def load_filter_object(filter):
+        filter_serializer = FilterSchema()
+        filter_object = filter_serializer.load(filter)
+        return filter_object
+
     def get(self):
         filter_id = request.args.get('filter_id', type=int)
         if filter_id:
@@ -43,9 +49,8 @@ class FilterResource(Resource):
             app.logger.exception(key_error)
             return jsonify_data({}, 'Filter method post: invalid input json!', status.HTTP_400_BAD_REQUEST)
 
-        filter_serializer = FilterSchema()
         try:
-            filter_object = filter_serializer.load(filter)
+            filter_object = FilterResource.load_filter_object(filter)
         except ValidationError as validation_error:
             app.logger.exception(validation_error)
             return jsonify_data({}, 'Filter method post: serialization error!', status.HTTP_400_BAD_REQUEST)

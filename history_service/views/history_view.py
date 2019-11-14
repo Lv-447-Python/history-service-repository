@@ -20,6 +20,12 @@ class HistoryResource(Resource):
         history['rows_id'] = json.loads(history['rows_id'])
         return history
 
+    @staticmethod
+    def load_history_object(history):
+        history_serializer = HistorySchema()
+        history_object = history_serializer.load(history)
+        return history_object
+
     def get(self):
         history_data = {
             'user_id': request.args.get('user_id', type=int),
@@ -48,21 +54,24 @@ class HistoryResource(Resource):
             return jsonify_data({}, 'History method post: invalid input json!', status.HTTP_400_BAD_REQUEST)
 
         new_filter = requests.post('http://127.0.0.1:5000/filter', json=filter)
+        response = new_filter.json()
+        # marshmallow.exceptions.ValidationError: {'filter_id': ['Unknown field.']}
+        # history['filter_id'] = response['data']['filter_id']
 
-        if new_filter.status_code == 200:
-            response = new_filter.json()
-            # marshmallow.exceptions.ValidationError: {'filter_id': ['Unknown field.']}
-            # history['filter_id'] = response['data']
-            history_serializer = HistorySchema()
-            try:
-                history_object = history_serializer.load(history)
-            except ValidationError as validation_error:
-                app.logger.exception(validation_error)
-                return jsonify_data({}, 'History method post: serialization error!', status.HTTP_400_BAD_REQUEST)
+        try:
+            history_object = HistoryResource.load_history_object(history)
+        except ValidationError as validation_error:
+            app.logger.exception(validation_error)
+            return jsonify_data({}, 'History method post: serialization error!', status.HTTP_400_BAD_REQUEST)
 
-            history_object.filter_id = response['data']['filter_id']
-            # write condition for primary key unique constraint (if PK is already exist)
+        history_object.filter_id = response['data']['filter_id']
 
+        existing_history_record = History.query.filter_by(
+            user_id=history_object.user_id,
+            file_id=history_object.file_id,
+            filter_id=history_object.filter_id).first()
+
+        if not existing_history_record:
             history_object.save()
             new_history = HistoryResource.dump_history_object(history_object)
             return jsonify_data(new_history, '', status.HTTP_200_OK)
@@ -70,7 +79,19 @@ class HistoryResource(Resource):
         return jsonify_data({}, 'History method post: invalid input data!', status.HTTP_400_BAD_REQUEST)
 
     def delete(self):
-        pass
+        file_id = request.args.get('file_id', type=int)
+        if file_id:
+            history_objects = History.query.filter_by(file_id=file_id).all()
+            filters_id = [history_object.filter_id for history_object in history_objects]
+            for history_object in history_objects:
+                history_object.delete()
+            for filter_id in filters_id:
+                history_object = History.query.filter_by(filter_id=filter_id).first()
+                if not history_object:
+                    deleted_filter = requests.delete(f'http://127.0.0.1:5000/filter?filter_id={filter_id}')
+            history = [HistoryResource.dump_history_object(history_object) for history_object in history_objects]
+            return jsonify_data(history, '', status.HTTP_200_OK)
+        return jsonify_data({}, 'History method delete: invalid input data!', status.HTTP_400_BAD_REQUEST)
 
 
 api.add_resource(HistoryResource, '/history')
