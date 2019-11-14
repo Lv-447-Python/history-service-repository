@@ -1,3 +1,7 @@
+"""
+Module for initialization different kinds of instances (flask app, database,
+manager, logger.
+"""
 import logging
 from flask import Flask
 from flask_restful import Api
