@@ -7,7 +7,7 @@ from flask_api import status
 from marshmallow.exceptions import ValidationError
 from history_service import api
 from history_service import app
-from history_service.views.filter_view import jsonify_data
+from history_service.utils.utils import jsonify_data
 from history_service.models.history_model import History
 from history_service.serializers.history_serializer import HistorySchema
 
@@ -55,12 +55,10 @@ class HistoryResource(Resource):
             'file_id': request.args.get('file_id', type=int),
             'filter_id': request.args.get('filter_id', type=int)
         }
-        not_empty_fields = {field: value for field, value in history_data.items() if value}
+        not_empty_fields = dict(filter(lambda item: item[1], history_data.items()))
         history_objects = History.query.filter_by(**not_empty_fields).all()
         if history_objects:
-            history = [HistoryResource.dump_history_object(history_object)
-                       for history_object in history_objects]
-
+            history = list(map(HistoryResource.dump_history_object, history_objects))
             return jsonify_data(history, '', status.HTTP_200_OK)
         return jsonify_data({}, 'History method get: invalid input data!',
                             status.HTTP_400_BAD_REQUEST)
@@ -87,8 +85,7 @@ class HistoryResource(Resource):
 
         new_filter = requests.post('http://127.0.0.1:5000/filter', json=filter_value)
         response = new_filter.json()
-        # marshmallow.exceptions.ValidationError: {'filter_id': ['Unknown field.']}
-        # history['filter_id'] = response['data']['filter_id']
+        history['filter_id'] = response['data']['filter_id']
 
         try:
             history_object = HistoryResource.load_history_object(history)
@@ -96,8 +93,6 @@ class HistoryResource(Resource):
             app.logger.exception(validation_error)
             return jsonify_data({}, 'History method post: serialization error!',
                                 status.HTTP_400_BAD_REQUEST)
-
-        history_object.filter_id = response['data']['filter_id']
 
         existing_history_record = History.query.filter_by(
             user_id=history_object.user_id,
@@ -122,15 +117,14 @@ class HistoryResource(Resource):
         file_id = request.args.get('file_id', type=int)
         if file_id:
             history_objects = History.query.filter_by(file_id=file_id).all()
-            filters_id = [history_object.filter_id for history_object in history_objects]
+            filters_id = list(map(lambda history_object: history_object.filter_id, history_objects))
             for history_object in history_objects:
                 history_object.delete()
             for filter_id in filters_id:
                 history_object = History.query.filter_by(filter_id=filter_id).first()
                 if not history_object:
                     requests.delete(f'http://127.0.0.1:5000/filter?filter_id={filter_id}')
-            history = [HistoryResource.dump_history_object(history_object)
-                       for history_object in history_objects]
+            history = list(map(HistoryResource.dump_history_object, history_objects))
             return jsonify_data(history, '', status.HTTP_200_OK)
         return jsonify_data({}, 'History method delete: invalid input data!',
                             status.HTTP_400_BAD_REQUEST)

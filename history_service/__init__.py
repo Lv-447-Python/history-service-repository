@@ -25,6 +25,3 @@ manager.add_command('db', MigrateCommand)
 
 logger = logging.basicConfig(level=logging.DEBUG)
 
-
-from history_service.views.history_view import HistoryResource
-from history_service.views.filter_view import FilterResource

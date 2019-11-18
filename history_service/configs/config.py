@@ -1,0 +1,1 @@
+"""Configs fow history service."""
