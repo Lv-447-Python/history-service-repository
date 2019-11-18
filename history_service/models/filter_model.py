@@ -1,28 +1,10 @@
 """Module for filter model."""
-from history_service import db
+from history_service import DB
 
 
-class Filter(db.Model):
+class Filter(DB.Model):
     """Filter model class."""
     __tablename__ = 'filter'
 
-    filter_data = db.Column(db.String, unique=True, nullable=False)
-    filter_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-
-    def save(self):
-        """
-        Method for object saving into database.
-        Returns:
-            None.
-        """
-        db.session.add(self)
-        db.session.commit()
-
-    def delete(self):
-        """
-        Method for deleting object from database.
-        Returns:
-            None.
-        """
-        db.session.delete(self)
-        db.session.commit()
+    filter_data = DB.Column(DB.String, unique=True, nullable=False)
+    filter_id = DB.Column(DB.Integer, primary_key=True, autoincrement=True)

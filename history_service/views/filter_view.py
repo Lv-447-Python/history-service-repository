@@ -1,14 +1,14 @@
 """Module for filter resource."""
 import json
-from flask import jsonify, request
+from flask import request
 from flask_restful import Resource
 from flask_api import status
 from marshmallow.exceptions import ValidationError
-from history_service import api
-from history_service import app
+from history_service import API
+from history_service import APP
 from history_service.models.filter_model import Filter
 from history_service.serializers.filter_serializer import FilterSchema
-from history_service.utils.utils import jsonify_data
+from history_service.utils.utils import jsonify_data, save_into_db, delete_from_db
 
 
 class FilterResource(Resource):
@@ -68,20 +68,20 @@ class FilterResource(Resource):
         try:
             filter_value['filter_data'] = json.dumps(filter_value['filter_data'])
         except KeyError as key_error:
-            app.logger.exception(key_error)
+            APP.logger.exception(key_error)
             return jsonify_data({}, 'Filter method post: invalid input json!',
                                 status.HTTP_400_BAD_REQUEST)
 
         try:
             filter_object = FilterResource.load_filter_object(filter_value)
         except ValidationError as validation_error:
-            app.logger.exception(validation_error)
+            APP.logger.exception(validation_error)
             return jsonify_data({}, 'Filter method post: serialization error!',
                                 status.HTTP_400_BAD_REQUEST)
         existing_filter = Filter.query.filter_by(filter_data=filter_object.filter_data).first()
 
         if not existing_filter:
-            filter_object.save()
+            save_into_db(filter_object)
             new_filter = FilterResource.dump_filter_object(filter_object)
             return jsonify_data(new_filter, '', status.HTTP_200_OK)
         new_filter = FilterResource.dump_filter_object(existing_filter)
@@ -97,11 +97,11 @@ class FilterResource(Resource):
         if filter_id:
             filter_object = Filter.query.filter_by(filter_id=filter_id).first()
             if filter_object:
-                filter_object.delete()
+                delete_from_db(filter_object)
                 filter_value = FilterResource.dump_filter_object(filter_object)
                 return jsonify_data(filter_value, '', status.HTTP_200_OK)
         return jsonify_data({}, 'Filter method delete: invalid input data!',
                             status.HTTP_400_BAD_REQUEST)
 
 
-api.add_resource(FilterResource, '/filter')
+API.add_resource(FilterResource, '/filter')

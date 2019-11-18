@@ -5,11 +5,11 @@ from flask import request
 from flask_restful import Resource
 from flask_api import status
 from marshmallow.exceptions import ValidationError
-from history_service import api
-from history_service import app
-from history_service.utils.utils import jsonify_data
+from history_service import API
+from history_service import APP
 from history_service.models.history_model import History
 from history_service.serializers.history_serializer import HistorySchema
+from history_service.utils.utils import jsonify_data, save_into_db, delete_from_db
 
 
 class HistoryResource(Resource):
@@ -79,7 +79,7 @@ class HistoryResource(Resource):
             }
             filter_value = {'filter_data': history_record['filter_data']}
         except KeyError as key_error:
-            app.logger.exception(key_error)
+            APP.logger.exception(key_error)
             return jsonify_data({}, 'History method post: invalid input json!',
                                 status.HTTP_400_BAD_REQUEST)
 
@@ -90,7 +90,7 @@ class HistoryResource(Resource):
         try:
             history_object = HistoryResource.load_history_object(history)
         except ValidationError as validation_error:
-            app.logger.exception(validation_error)
+            APP.logger.exception(validation_error)
             return jsonify_data({}, 'History method post: serialization error!',
                                 status.HTTP_400_BAD_REQUEST)
 
@@ -100,7 +100,7 @@ class HistoryResource(Resource):
             filter_id=history_object.filter_id).first()
 
         if not existing_history_record:
-            history_object.save()
+            save_into_db(history_object)
             new_history = HistoryResource.dump_history_object(history_object)
             return jsonify_data(new_history, '', status.HTTP_200_OK)
 
@@ -119,7 +119,7 @@ class HistoryResource(Resource):
             history_objects = History.query.filter_by(file_id=file_id).all()
             filters_id = list(map(lambda history_object: history_object.filter_id, history_objects))
             for history_object in history_objects:
-                history_object.delete()
+                delete_from_db(history_object)
             for filter_id in filters_id:
                 history_object = History.query.filter_by(filter_id=filter_id).first()
                 if not history_object:
@@ -130,4 +130,4 @@ class HistoryResource(Resource):
                             status.HTTP_400_BAD_REQUEST)
 
 
-api.add_resource(HistoryResource, '/history')
+API.add_resource(HistoryResource, '/history')
