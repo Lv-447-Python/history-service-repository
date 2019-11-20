@@ -6,4 +6,5 @@ from history_service.models.filter_model import Filter
 class FilterSchema(MARSHMALLOW.ModelSchema):
     """Filter marshmallow schema."""
     class Meta:
+        """Meta class for Filter marshmallow schema."""
         model = Filter

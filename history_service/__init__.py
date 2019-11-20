@@ -14,7 +14,8 @@ APP = Flask(__name__)
 API = Api(APP)
 
 APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2://postgres:admin@127.0.0.1:5432/HistoryDB'
+APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2:' \
+                                        '//postgres:admin@127.0.0.1:5432/HistoryDB'
 
 
 DB = SQLAlchemy(APP)
@@ -23,4 +24,4 @@ MIGRATE = Migrate(APP, DB)
 MANAGER = Manager(APP)
 MANAGER.add_command('db', MigrateCommand)
 
-LOGGER = logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
