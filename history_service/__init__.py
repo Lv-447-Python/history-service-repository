@@ -1,6 +1,6 @@
 """
 Module for initialization different kinds of instances (flask app, database,
-manager, logger.
+manager.
 """
 import logging
 from flask import Flask
@@ -23,5 +23,3 @@ MARSHMALLOW = Marshmallow(APP)
 MIGRATE = Migrate(APP, DB)
 MANAGER = Manager(APP)
 MANAGER.add_command('db', MigrateCommand)
-
-logging.basicConfig(level=logging.DEBUG)
