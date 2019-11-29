@@ -470,3 +470,5 @@ dmypy.json
 .vscode/
 .vscode/*
 migrations/
+
+config.log

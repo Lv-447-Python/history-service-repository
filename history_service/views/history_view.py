@@ -4,7 +4,7 @@ from flask import request, jsonify, make_response
 from flask_restful import Resource
 from flask_api import status
 from marshmallow.exceptions import ValidationError
-from history_service import API
+from history_service import API, LOGGER
 from history_service.models.history_model import History
 from history_service.models.filter_model import Filter
 from history_service.utils.utils import save_into_db, delete_from_db
@@ -39,6 +39,7 @@ class HistoryResource(Resource):
         """
         history_objects = History.query.all()
         history = list(map(dump_history_object, history_objects))
+        LOGGER.info('Successful request to HistoryResource')
         return make_response(jsonify(history), status.HTTP_200_OK)
 
     def post(self):
@@ -56,12 +57,14 @@ class HistoryResource(Resource):
                 'rows_id': json.dumps(history_record['rows_id'])
             }
             filter_value = {'filter_data': json.dumps(history_record['filter_data'])}
-        except KeyError:
+        except KeyError as key_error:
+            LOGGER.error(f'{key_error} key error')
             return make_response({}, status.HTTP_400_BAD_REQUEST)
 
         try:
             filter_object = load_filter_object(filter_value)
-        except ValidationError:
+        except ValidationError as validation_error:
+            LOGGER.error(f'{validation_error} validation error')
             return make_response({}, status.HTTP_400_BAD_REQUEST)
 
         filter_object = HistoryResource.create_new_filter(filter_object)
@@ -69,7 +72,8 @@ class HistoryResource(Resource):
 
         try:
             history_object = load_history_object(history_value)
-        except ValidationError:
+        except ValidationError as validation_error:
+            LOGGER.error(f'{validation_error} validation error')
             return make_response({}, status.HTTP_400_BAD_REQUEST)
 
         existing_history_record = History.query.filter_by(
@@ -80,8 +84,10 @@ class HistoryResource(Resource):
         if not existing_history_record:
             save_into_db(history_object)
             new_history = dump_history_object(history_object)
+            LOGGER.info('Successful request to HistoryResource')
             return make_response(jsonify(new_history), status.HTTP_201_CREATED)
 
+        LOGGER.error('Record with this parameters already exists')
         return make_response({}, status.HTTP_400_BAD_REQUEST)
 
 
@@ -109,7 +115,9 @@ class HistoryRecordResource(Resource):
         history_object = History.query.filter_by(**history_data).first()
         if history_object:
             history_record = dump_history_object(history_object)
+            LOGGER.info('Successful request to HistoryRecordResource')
             return make_response(jsonify(history_record), status.HTTP_200_OK)
+        LOGGER.error('There isn\'t data with this parameters')
         return make_response({}, status.HTTP_400_BAD_REQUEST)
 
 
@@ -129,10 +137,9 @@ class UserHistoryResource(Resource):
             'user_id': user_id
         }
         history_objects = History.query.filter_by(**history_data).all()
-        if history_objects:
-            history = list(map(dump_history_object, history_objects))
-            return make_response(jsonify(history), status.HTTP_200_OK)
-        return make_response({}, status.HTTP_400_BAD_REQUEST)
+        history = list(map(dump_history_object, history_objects))
+        LOGGER.info('Successful request to UserHistoryResource')
+        return make_response(jsonify(history), status.HTTP_200_OK)
 
 
 class FileHistoryResource(Resource):
@@ -161,7 +168,9 @@ class FileHistoryResource(Resource):
                     delete_from_db(filter_object)
 
             history = list(map(dump_history_object, history_objects))
+            LOGGER.info('Successful request to FileHistoryResource')
             return make_response(jsonify(history), status.HTTP_200_OK)
+        LOGGER.error('There isn\'t data with this parameters')
         return make_response({}, status.HTTP_400_BAD_REQUEST)
 
 
