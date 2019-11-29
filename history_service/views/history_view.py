@@ -135,8 +135,8 @@ class UserHistoryResource(Resource):
         return make_response({}, status.HTTP_400_BAD_REQUEST)
 
 
-class DeleteHistoryRecordResource(Resource):
-    """Deleting history record resource class."""
+class FileHistoryResource(Resource):
+    """Deleting history record resource class in case of deleting files."""
 
     def delete(self, file_id):
         """
@@ -167,5 +167,5 @@ class DeleteHistoryRecordResource(Resource):
 
 API.add_resource(HistoryResource, '/history')
 API.add_resource(UserHistoryResource, '/history/<int:user_id>')
-API.add_resource(DeleteHistoryRecordResource, '/history/<int:file_id>')
+API.add_resource(FileHistoryResource, '/history/<int:file_id>')
 API.add_resource(HistoryRecordResource, '/history/<int:user_id>/<int:file_id>/<int:filter_id>')

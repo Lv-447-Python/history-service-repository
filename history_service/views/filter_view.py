@@ -27,6 +27,9 @@ class SingleFilterResource(Resource):
     def get(self, filter_id):
         """
         Method for HTTP GET method working out. Used for getting single filter resources.
+        Args:
+            filter_id:
+                Filter identifier.
         Returns:
             Filters in accordance to GET method arguments and query status.
         """

@@ -1,8 +1,7 @@
 """
 Module for initialization different kinds of instances (flask app, database,
-manager.
+manager etc).
 """
-import logging
 from flask import Flask
 from flask_restful import Api
 from flask_marshmallow import Marshmallow
