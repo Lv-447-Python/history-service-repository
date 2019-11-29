@@ -1,6 +1,5 @@
 """Module for history resource."""
 import json
-import requests
 from flask import request, jsonify, make_response
 from flask_restful import Resource
 from flask_api import status
@@ -9,7 +8,7 @@ from history_service import API
 from history_service.models.history_model import History
 from history_service.models.filter_model import Filter
 from history_service.utils.utils import save_into_db, delete_from_db
-from history_service.utils.utils import dump_filter_object, dump_history_object
+from history_service.utils.utils import dump_history_object
 from history_service.utils.utils import load_filter_object, load_history_object
 
 
@@ -18,6 +17,14 @@ class HistoryResource(Resource):
 
     @staticmethod
     def create_new_filter(filter_object):
+        """
+        Add filter object to filter table in database.
+        Args:
+            filter_object:
+                Any instance of Filter model class.
+        Returns:
+            Updated filter object with id.
+        """
         existing_filter = Filter.query.filter_by(filter_data=filter_object.filter_data).first()
         if not existing_filter:
             save_into_db(filter_object)
@@ -84,6 +91,13 @@ class HistoryRecordResource(Resource):
     def get(self, user_id, file_id, filter_id):
         """
         Method for HTTP GET method working out. Used for getting history resources.
+        Args:
+            user_id:
+                User identifier.
+            file_id:
+                File identifier.
+            filter_id:
+                Filter identifier.
         Returns:
             History records in accordance to GET method arguments and query status.
         """
@@ -99,12 +113,37 @@ class HistoryRecordResource(Resource):
         return make_response({}, status.HTTP_400_BAD_REQUEST)
 
 
+class UserHistoryResource(Resource):
+    """User history resource class."""
+
+    def get(self, user_id):
+        """
+        Method for HTTP GET method working out. Used for getting history resources.
+        Args:
+            user_id:
+                User identifier.
+        Returns:
+            History records in accordance to GET method arguments and query status.
+        """
+        history_data = {
+            'user_id': user_id
+        }
+        history_objects = History.query.filter_by(**history_data).all()
+        if history_objects:
+            history = list(map(dump_history_object, history_objects))
+            return make_response(jsonify(history), status.HTTP_200_OK)
+        return make_response({}, status.HTTP_400_BAD_REQUEST)
+
+
 class DeleteHistoryRecordResource(Resource):
     """Deleting history record resource class."""
 
     def delete(self, file_id):
         """
         Method for HTTP DELETE method working out. Used for deleting history resources.
+        Args:
+            file_id:
+                File identifier.
         Returns:
             Deleted history records in accordance to DELETE method arguments and
             query status.
@@ -127,5 +166,6 @@ class DeleteHistoryRecordResource(Resource):
 
 
 API.add_resource(HistoryResource, '/history')
+API.add_resource(UserHistoryResource, '/history/<int:user_id>')
 API.add_resource(DeleteHistoryRecordResource, '/history/<int:file_id>')
 API.add_resource(HistoryRecordResource, '/history/<int:user_id>/<int:file_id>/<int:filter_id>')

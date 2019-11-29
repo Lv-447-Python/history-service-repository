@@ -1,5 +1,5 @@
 """Module for filter resource."""
-from flask import request, make_response, jsonify
+from flask import make_response, jsonify
 from flask_restful import Resource
 from flask_api import status
 from history_service import API

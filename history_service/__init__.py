@@ -23,3 +23,6 @@ MARSHMALLOW = Marshmallow(APP)
 MIGRATE = Migrate(APP, DB)
 MANAGER = Manager(APP)
 MANAGER.add_command('db', MigrateCommand)
+
+from history_service.models.history_model import History
+from history_service.models.filter_model import Filter
