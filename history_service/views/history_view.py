@@ -58,13 +58,13 @@ class HistoryResource(Resource):
             }
             filter_value = {'filter_data': json.dumps(history_record['filter_data'])}
         except KeyError as key_error:
-            LOGGER.error(f'{key_error} key error')
+            LOGGER.error('%s key error', key_error)
             return make_response({}, status.HTTP_400_BAD_REQUEST)
 
         try:
             filter_object = load_filter_object(filter_value)
         except ValidationError as validation_error:
-            LOGGER.error(f'{validation_error} validation error')
+            LOGGER.error('%s validation error', validation_error)
             return make_response({}, status.HTTP_400_BAD_REQUEST)
 
         filter_object = HistoryResource.create_new_filter(filter_object)
@@ -73,7 +73,7 @@ class HistoryResource(Resource):
         try:
             history_object = load_history_object(history_value)
         except ValidationError as validation_error:
-            LOGGER.error(f'{validation_error} validation error')
+            LOGGER.error('%s validation error', validation_error)
             return make_response({}, status.HTTP_400_BAD_REQUEST)
 
         existing_history_record = History.query.filter_by(

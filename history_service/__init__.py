@@ -14,9 +14,17 @@ from flask_script import Manager
 APP = Flask(__name__)
 API = Api(APP)
 
+POSTGRES = {
+    'user': 'postgres',
+    'pw': '',
+    'db': 'HistoryDB',
+    'host': 'db',
+    'port': '5432',
+}
+
+APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://%(user)s:\
+%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2:' \
-                                        '//postgres:admin@127.0.0.1:5432/HistoryDB'
 
 
 DB = SQLAlchemy(APP)
@@ -25,8 +33,8 @@ MIGRATE = Migrate(APP, DB)
 MANAGER = Manager(APP)
 MANAGER.add_command('db', MigrateCommand)
 
-config_file_path = fr"{os.getcwd()}\history_service\configs\logging.conf"
-logging.config.fileConfig(config_file_path)
+# CONFIG_FILE_PATH = fr"{os.getcwd()}\history_service\configs\logging.conf"
+# logging.config.fileConfig(CONFIG_FILE_PATH)
 LOGGER = logging.getLogger('history_service')
 LOGGER.setLevel(logging.INFO)
 

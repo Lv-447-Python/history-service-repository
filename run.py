@@ -6,4 +6,4 @@ from history_service.views.history_view import HistoryResource, HistoryRecordRes
 
 
 if __name__ == '__main__':
-    APP.run(debug=True)
+    APP.run(debug=True, host='0.0.0.0')
