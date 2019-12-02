@@ -175,6 +175,7 @@ class FileHistoryResource(Resource):
 
 
 API.add_resource(HistoryResource, '/history')
-API.add_resource(UserHistoryResource, '/history/<int:user_id>')
-API.add_resource(FileHistoryResource, '/history/<int:file_id>')
-API.add_resource(HistoryRecordResource, '/history/<int:user_id>/<int:file_id>/<int:filter_id>')
+API.add_resource(UserHistoryResource, '/history/user/<int:user_id>')
+API.add_resource(FileHistoryResource, '/history/file/<int:file_id>')
+API.add_resource(HistoryRecordResource, '/history/user/<int:user_id>/file/<int:file_id>'
+                                        '/filter/<int:filter_id>')
