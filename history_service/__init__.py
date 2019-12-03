@@ -14,16 +14,18 @@ from flask_script import Manager
 APP = Flask(__name__)
 API = Api(APP)
 
-POSTGRES = {
-    'user': 'postgres',
-    'pw': '',
-    'db': 'HistoryDB',
-    'host': 'db',
-    'port': '5432',
-}
-
-APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://%(user)s:\
-%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+# POSTGRES = {
+#     'user': 'postgres',
+#     'pw': '',
+#     'db': 'HistoryDB',
+#     'host': 'db',
+#     'port': '5432',
+# }
+#
+# APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://%(user)s:\
+# %(pw)s@%(host)s:%(port)s/%(db)s' %
+APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2:' \
+                                        '//postgres:postgres@127.0.0.1:5432/HistoryDB'
 APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
