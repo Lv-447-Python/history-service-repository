@@ -93,3 +93,42 @@ class HistoryRecordResourceTestCase(HistoryServiceTestCase):
         self.assertEqual(response.status_code, 201)
         response = self.APP.get('history/user/2/file/2/filter/3')
         self.assertEqual(response.status_code, 400)
+
+
+class UserHistoryResourceTestCase(HistoryServiceTestCase):
+    """Tests for UserHistoryResource."""
+
+    def test_user_history_getting(self):
+        """
+        Test for UserHistoryResource get method.
+        Returns:
+            None.
+        """
+        response = self.APP.get('history/user/1')
+        self.assertEqual(response.status_code, 200)
+
+
+class FileHistoryResourceTestCase(HistoryServiceTestCase):
+    """Tests for FileHistoryResources."""
+
+    def test_history_record_deleting_with_correct_parameters(self):
+        """
+        Test for FileHistoryResource delete method with correct parameters.
+        Returns:
+            None.
+        """
+        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+            history_content = json.loads(history_json.read())
+            response = self.APP.post('/history', json=history_content)
+        self.assertEqual(response.status_code, 201)
+        response = self.APP.delete('history/file/1')
+        self.assertEqual(response.status_code, 200)
+
+    def test_history_record_deleting_with_incorrect_parameters(self):
+        """
+        Test for FileHistoryResource delete method with incorrect parameters.
+        Returns:
+            None.
+        """
+        response = self.APP.delete('history/file/1')
+        self.assertEqual(response.status_code, 400)

@@ -1,9 +1,9 @@
 """Module for testing filter view."""
 import json
-from .tests_for_history_service import HistoryServiceTestCase
 from history_service.views.filter_view import FiltersResource,\
                                               SingleFilterResource
 from history_service.views.history_view import HistoryResource
+from .tests_for_history_service import HistoryServiceTestCase
 
 
 class FiltersResourceTestCase(HistoryServiceTestCase):
