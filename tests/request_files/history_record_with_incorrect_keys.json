@@ -1,0 +1,9 @@
+{
+  "user": 2,
+  "file": 1,
+  "filter": {
+    "color": "red",
+    "count": 13
+  },
+  "rows": [1, 2, 4]
+}

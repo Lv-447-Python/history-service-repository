@@ -88,7 +88,7 @@ class HistoryResource(Resource):
             return make_response(jsonify(new_history), status.HTTP_201_CREATED)
 
         LOGGER.error('Record with this parameters already exists')
-        return make_response({}, status.HTTP_400_BAD_REQUEST)
+        return make_response({}, status.HTTP_409_CONFLICT)
 
 
 class HistoryRecordResource(Resource):
