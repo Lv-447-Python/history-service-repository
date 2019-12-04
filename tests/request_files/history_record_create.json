@@ -1,0 +1,9 @@
+{
+  "user_id": 2,
+  "file_id": 1,
+  "filter_data": {
+    "color": "red",
+    "count": 13
+  },
+  "rows_id": [1, 2, 4]
+}
