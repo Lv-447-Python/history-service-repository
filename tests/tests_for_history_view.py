@@ -1,8 +1,8 @@
 """Module for testing history view."""
 import json
+from history_service.views.history_view import HistoryResource, HistoryRecordResource, \
+    FileHistoryResource, UserHistoryResource
 from .tests_for_history_service import HistoryServiceTestCase
-from history_service.views.history_view import HistoryResource, HistoryRecordResource,\
-                                               FileHistoryResource, UserHistoryResource
 
 
 class HistoryResourceTestCase(HistoryServiceTestCase):
@@ -23,7 +23,7 @@ class HistoryResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+        with open('tests/request_files/correct_history_record_data.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 201)
@@ -34,7 +34,7 @@ class HistoryResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_incorrect_keys.json', 'r') as history_json:
+        with open('tests/request_files/incorrect_history_record_keys.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 400)
@@ -45,7 +45,7 @@ class HistoryResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_incorrect_values.json', 'r') as history_json:
+        with open('tests/request_files/incorrect_history_record_values.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             print(history_content)
             response = self.APP.post('/history', json=history_content)
@@ -57,7 +57,7 @@ class HistoryResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+        with open('tests/request_files/correct_history_record_data.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 201)
@@ -74,7 +74,7 @@ class HistoryRecordResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+        with open('tests/request_files/correct_history_record_data.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 201)
@@ -87,7 +87,7 @@ class HistoryRecordResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+        with open('tests/request_files/correct_history_record_data.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 201)
@@ -117,7 +117,7 @@ class FileHistoryResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+        with open('tests/request_files/correct_history_record_data.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 201)

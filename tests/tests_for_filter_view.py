@@ -28,7 +28,7 @@ class SingleFilterResourceTestCase(HistoryServiceTestCase):
         Returns:
             None.
         """
-        with open('tests/request_files/history_record_with_correct_data.json', 'r') as history_json:
+        with open('tests/request_files/correct_history_record_data.json', 'r') as history_json:
             history_content = json.loads(history_json.read())
             response = self.APP.post('/history', json=history_content)
         self.assertEqual(response.status_code, 201)
