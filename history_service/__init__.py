@@ -35,10 +35,5 @@ MIGRATE = Migrate(APP, DB)
 MANAGER = Manager(APP)
 MANAGER.add_command('db', MigrateCommand)
 
-# CONFIG_FILE_PATH = fr"{os.getcwd()}\history_service\configs\logging.conf"
-# logging.config.fileConfig(CONFIG_FILE_PATH)
-LOGGER = logging.getLogger('history_service')
-LOGGER.setLevel(logging.INFO)
-
 from history_service.models.history_model import History
 from history_service.models.filter_model import Filter

@@ -3,7 +3,7 @@ from flask import make_response, jsonify
 from flask_restful import Resource
 from flask_api import status
 from history_service import API
-from history_service import LOGGER
+from history_service.configs.logger import LOGGER
 from history_service.models.filter_model import Filter
 from history_service.utils.utils import dump_filter_object
 

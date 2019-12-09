@@ -4,7 +4,8 @@ from flask import request, jsonify, make_response
 from flask_restful import Resource
 from flask_api import status
 from marshmallow.exceptions import ValidationError
-from history_service import API, LOGGER
+from history_service import API
+from history_service.configs.logger import LOGGER
 from history_service.models.history_model import History
 from history_service.models.filter_model import Filter
 from history_service.utils.utils import save_into_db, delete_from_db
