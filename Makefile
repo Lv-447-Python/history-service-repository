@@ -28,3 +28,7 @@ lint:
 
 test:
 	${PYTHON} -m unittest
+
+coverage:
+	coverage run --omit venv\* -m unittest discover
+    coverage report -m
