@@ -9,7 +9,7 @@ from history_service.configs.logger import LOGGER
 from history_service.models.history_model import History
 from history_service.models.filter_model import Filter
 from history_service.utils.utils import save_into_db, delete_from_db
-from history_service.utils.utils import dump_history_object
+from history_service.utils.utils import dump_history_object, create_error_dictionary
 from history_service.utils.utils import load_filter_object, load_history_object
 
 
@@ -59,14 +59,16 @@ class HistoryResource(Resource):
             }
             filter_value = {'filter_data': json.dumps(history_record['filter_data'])}
         except KeyError as key_error:
-            LOGGER.error('%s key error', key_error)
-            return make_response({}, status.HTTP_400_BAD_REQUEST)
+            LOGGER.error('Key error, %s', key_error)
+            response_object = create_error_dictionary(f'Key error, {key_error}')
+            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
         try:
             filter_object = load_filter_object(filter_value)
         except ValidationError as validation_error:
-            LOGGER.error('%s validation error', validation_error)
-            return make_response({}, status.HTTP_400_BAD_REQUEST)
+            LOGGER.error('Validation error, %s', validation_error)
+            response_object = create_error_dictionary(f'Validation error, {validation_error}')
+            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
         filter_object = HistoryResource.create_new_filter(filter_object)
         history_value['filter_id'] = filter_object.filter_id
@@ -74,8 +76,9 @@ class HistoryResource(Resource):
         try:
             history_object = load_history_object(history_value)
         except ValidationError as validation_error:
-            LOGGER.error('%s validation error', validation_error)
-            return make_response({}, status.HTTP_400_BAD_REQUEST)
+            LOGGER.error('Validation error, %s', validation_error)
+            response_object = create_error_dictionary(f'Validation error, {validation_error}')
+            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
         existing_history_record = History.query.filter_by(
             user_id=history_object.user_id,
@@ -88,8 +91,9 @@ class HistoryResource(Resource):
             LOGGER.info('Successful request to HistoryResource')
             return make_response(jsonify(new_history), status.HTTP_201_CREATED)
 
-        LOGGER.error('Record with this parameters already exists')
-        return make_response({}, status.HTTP_409_CONFLICT)
+        LOGGER.error('This object already exists')
+        response_object = create_error_dictionary('This object already exists.')
+        return make_response(jsonify(response_object), status.HTTP_409_CONFLICT)
 
 
 class HistoryRecordResource(Resource):
@@ -119,7 +123,8 @@ class HistoryRecordResource(Resource):
             LOGGER.info('Successful request to HistoryRecordResource')
             return make_response(jsonify(history_record), status.HTTP_200_OK)
         LOGGER.error('There isn\'t data with this parameters')
-        return make_response({}, status.HTTP_400_BAD_REQUEST)
+        response_object = create_error_dictionary('There isn\'t data with this parameters')
+        return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
 
 class UserHistoryResource(Resource):
@@ -172,7 +177,8 @@ class FileHistoryResource(Resource):
             LOGGER.info('Successful request to FileHistoryResource')
             return make_response(jsonify(history), status.HTTP_200_OK)
         LOGGER.error('There isn\'t data with this parameters')
-        return make_response({}, status.HTTP_400_BAD_REQUEST)
+        response_object = create_error_dictionary('There isn\'t data with this parameters')
+        return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
 
 API.add_resource(HistoryResource, '/history')

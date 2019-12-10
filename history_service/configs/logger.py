@@ -1,3 +1,4 @@
+"""Module for logger configuration."""
 import logging
 import logging.config
 

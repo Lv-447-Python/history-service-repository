@@ -5,7 +5,7 @@ from flask_api import status
 from history_service import API
 from history_service.configs.logger import LOGGER
 from history_service.models.filter_model import Filter
-from history_service.utils.utils import dump_filter_object
+from history_service.utils.utils import dump_filter_object, create_error_dictionary
 
 
 class FiltersResource(Resource):
@@ -41,7 +41,8 @@ class SingleFilterResource(Resource):
             LOGGER.info('Successful request to SingleFilterResource')
             return make_response(jsonify(filter_value), status.HTTP_200_OK)
         LOGGER.error('Invalid filter id parameter')
-        return make_response({}, status.HTTP_400_BAD_REQUEST)
+        response_object = create_error_dictionary('Invalid filter id parameter')
+        return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
 
 API.add_resource(FiltersResource, '/filter')
