@@ -2,6 +2,14 @@
 import unittest
 from history_service import APP, DB
 
+POSTGRES = {
+    'user': 'postgres',
+    'pw': 'postgres',
+    'db': 'HistoryTestDB',
+    'host': '127.0.0.1',
+    'port': '5432',
+}
+
 
 class HistoryServiceTestCase(unittest.TestCase):
     """General class for service resources testing."""
@@ -14,7 +22,7 @@ class HistoryServiceTestCase(unittest.TestCase):
         """
         APP.config['TESTING'] = True
         APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2:' \
-                                                '//postgres:postgres@127.0.0.1:5432/HistoryTestDB'
+            '//%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
         self.APP = APP.test_client()
         DB.create_all()
 
