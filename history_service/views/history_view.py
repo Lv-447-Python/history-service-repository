@@ -1,5 +1,6 @@
 """Module for history resource."""
 import json
+import requests
 from flask import request, jsonify, make_response
 from flask_restful import Resource
 from flask_api import status
@@ -50,10 +51,11 @@ class HistoryResource(Resource):
             New history records in accordance to request and query status.
         """
         history_record = request.get_json()
+        print(request.headers)
 
         try:
             history_value = {
-                'user_id': history_record['user_id'],
+                'user_id': 1,
                 'file_id': history_record['file_id'],
                 'rows_id': json.dumps(history_record['rows_id'])
             }
@@ -91,9 +93,9 @@ class HistoryResource(Resource):
             LOGGER.info('Successful request to HistoryResource')
             return make_response(jsonify(new_history), status.HTTP_201_CREATED)
 
-        LOGGER.error('This object already exists')
+        LOGGER.info('This object already exists')
         response_object = create_error_dictionary('This object already exists.')
-        return make_response(jsonify(response_object), status.HTTP_409_CONFLICT)
+        return make_response(jsonify(response_object), status.HTTP_201_CREATED)
 
 
 class HistoryRecordResource(Resource):
@@ -130,7 +132,7 @@ class HistoryRecordResource(Resource):
 class UserHistoryResource(Resource):
     """User history resource class."""
 
-    def get(self, user_id):
+    def get(self):
         """
         Method for HTTP GET method working out. Used for getting history resources.
         Args:
@@ -140,10 +142,27 @@ class UserHistoryResource(Resource):
             History records in accordance to GET method arguments and query status.
         """
         history_data = {
-            'user_id': user_id
+            'user_id': 1
         }
         history_objects = History.query.filter_by(**history_data).all()
-        history = list(map(dump_history_object, history_objects))
+        history = []
+        for history_object in history_objects:
+            response = requests.get(f'http://127.0.0.1:5001/file/{history_object.file_id}')
+            if response.status_code != 200:
+                LOGGER.error('File service request error')
+                response_object = create_error_dictionary('File service request error')
+                return make_response(jsonify(response_object), status.HTTP_500_INTERNAL_SERVER_ERROR)
+            response_json = response.json()
+            history_record = dump_history_object(history_object)
+            try:
+                history_record['path'] = response_json['path']
+                filter_record = Filter.query.filter_by(filter_id=history_record['filter_id']).first()
+                history_record['filter'] = filter_record.filter_data
+                history.append(history_record)
+            except KeyError as key_error:
+                LOGGER.error(f'File service response error, {key_error}')
+                response_object = create_error_dictionary(f'File service response error, {key_error}')
+                return make_response(jsonify(response_object), status.HTTP_500_INTERNAL_SERVER_ERROR)
         LOGGER.info('Successful request to UserHistoryResource')
         return make_response(jsonify(history), status.HTTP_200_OK)
 
@@ -182,7 +201,7 @@ class FileHistoryResource(Resource):
 
 
 API.add_resource(HistoryResource, '/history')
-API.add_resource(UserHistoryResource, '/history/user/<int:user_id>')
+API.add_resource(UserHistoryResource, '/history/user')
 API.add_resource(FileHistoryResource, '/history/file/<int:file_id>')
 API.add_resource(HistoryRecordResource, '/history/user/<int:user_id>/file/<int:file_id>'
                                         '/filter/<int:filter_id>')

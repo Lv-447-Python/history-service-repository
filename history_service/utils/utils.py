@@ -88,7 +88,7 @@ def delete_from_db(model_object):
     DB.session.delete(model_object)
     DB.session.commit()
 
-
+#adadadad
 def create_error_dictionary(message):
     """
     Create dictionary with 'error' key and some message in value.

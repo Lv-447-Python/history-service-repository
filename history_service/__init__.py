@@ -18,14 +18,14 @@ CORS(APP, supports_credentials=True)
 
 POSTGRES = {
     'user': 'postgres',
-    'pw': '',
+    'pw': 'postgres',
     'db': 'HistoryDB',
-    'host': 'db',
+    'host': '127.0.0.1',
     'port': '5432',
 }
 
-APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://%(user)s:\
-    %(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
+APP.config['SQLALCHEMY_DATABASE_URI'] = 'postgres+psycopg2:' \
+                                        '//%(user)s:%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
 APP.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 
