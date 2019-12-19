@@ -30,5 +30,5 @@ test:
 	${PYTHON} -m unittest
 
 coverage:
-	coverage run --omit venv\* -m unittest discover
-    coverage report -m
+	env/bin/coverage run --omit venv\* -m unittest discover
+	env/bin/coverage report -m
