@@ -1,4 +1,14 @@
-"""
+"""axios({
+            headers: {'Content-Type': 'form-data' },
+            method: 'put',
+            url: 'http://0.0.0.0:80/filtering/' + props.currentFileId,
+            data: filters,
+        })
+            .then(response => {
+                let filteringResult = response.data['result'];
+                console.log(filteringResult);
+                props.responseResult(filteringResult)
+            });
 Module for initialization different kinds of instances (flask app, database,
 manager etc).
 """

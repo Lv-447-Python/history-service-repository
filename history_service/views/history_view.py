@@ -51,11 +51,16 @@ class HistoryResource(Resource):
             New history records in accordance to request and query status.
         """
         history_record = request.get_json()
-        print(request.headers)
-
+        try:
+            # тут має бути отримання айдішки по сесії
+            user_id = 1
+        except KeyError:
+            LOGGER.error('There is not session in headers')
+            response_object = create_error_dictionary('There is not session in headers')
+            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
         try:
             history_value = {
-                'user_id': 1,
+                'user_id': user_id,
                 'file_id': history_record['file_id'],
                 'rows_id': json.dumps(history_record['rows_id'])
             }
@@ -141,13 +146,20 @@ class UserHistoryResource(Resource):
         Returns:
             History records in accordance to GET method arguments and query status.
         """
+        try:
+            # тут має бути отримання айдішки по сесії
+            user_id = 1
+        except KeyError:
+            LOGGER.error('There is not session in headers')
+            response_object = create_error_dictionary('There is not session in headers')
+            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
         history_data = {
-            'user_id': 1
+            'user_id': user_id
         }
-        history_objects = History.query.filter_by(**history_data).all()
+        history_objects = History.query.filter_by(user_id=user_id).all()
         history = []
         for history_object in history_objects:
-            response = requests.get(f'http://127.0.0.1:5001/file/{history_object.file_id}')
+            response = requests.get(f'http://web-file:5000/file/{history_object.file_id}')
             if response.status_code != 200:
                 LOGGER.error('File service request error')
                 response_object = create_error_dictionary('File service request error')
