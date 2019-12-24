@@ -18,8 +18,8 @@ from history_service.utils.utils import dump_history_object, create_error_dictio
 from history_service.utils.utils import load_filter_object, load_history_object
 
 
-def decod(cookie):
-    """Функція декодування сесії в словник"""
+def decode_session_to_jwt(cookie):
+    """Function to decode session to jwt_token"""
     try:
         compressed = False
         payload = cookie
@@ -34,7 +34,12 @@ def decod(cookie):
         if compressed:
             data = zlib.decompress(data)
 
-        return data.decode("utf-8")
+        data = data.decode("utf-8")
+        data = data.split('"jwt_token":"')[1]
+        data = data[:-2]
+        return data
+
+
     except Exception as e:
         return "[Decoding error: are you sure this was a Flask session cookie? {}]".format(e)
 
@@ -78,9 +83,17 @@ class HistoryResource(Resource):
             New history records in accordance to request and query status.
         """
         history_record = request.get_json()
+
         try:
             # тут має бути отримання айдішки по сесії
-            user_id = 1
+            LOGGER.info(request.cookies)
+            session = request.cookies['session']
+            LOGGER.info(session)
+            token = decode_session_to_jwt(session)
+            LOGGER.info(token)
+            user_id = decode_token(token)['identity']
+
+            LOGGER.info("USER_ID %s", user_id)
         except KeyError:
             LOGGER.error('There is not session in headers')
             response_object = create_error_dictionary('There is not session in headers')
@@ -133,7 +146,7 @@ class HistoryResource(Resource):
 class HistoryRecordResource(Resource):
     """History record resource class."""
 
-    def get(self, user_id, file_id, filter_id):
+    def get(self, file_id, filter_id):
         """
         Method for HTTP GET method working out. Used for getting history resources.
         Args:
@@ -146,6 +159,7 @@ class HistoryRecordResource(Resource):
         Returns:
             History records in accordance to GET method arguments and query status.
         """
+        user_id = True
         history_data = {
             'user_id': user_id,
             'file_id': file_id,
@@ -175,21 +189,10 @@ class UserHistoryResource(Resource):
         """
         try:
             # тут має бути отримання айдішки по сесії
-            sessione = request.cookies['session']
-            sessione_token = decod(sessione)
-            LOGGER.info("SESSIONE_TOKEN")
-            LOGGER.info(sessione_token)
-            LOGGER.info("SESSIONE_TOKEN['jwt_token']")
-            """В цьому місці шось ламається, хз чого. глянете
-            Не витягує значення з дікта чогось.
-            """
-            token = sessione_token.get(JWT_TOKEN)
-            LOGGER.info(token)
-            LOGGER.info("DECODE_TOKEN")
-            LOGGER.info(decode_token(token))
-
-
-            user_id = 1
+            session = request.cookies['session']
+            token = decode_session_to_jwt(session)
+            user_id = decode_token(token)['identity']
+            LOGGER.info("USER_ID %s", user_id)
         except KeyError:
             LOGGER.error('There is not session in headers')
             response_object = create_error_dictionary('There is not session in headers')
