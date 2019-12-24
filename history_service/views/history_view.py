@@ -1,8 +1,12 @@
 """Module for history resource."""
 import json
+from flask_jwt_extended import decode_token, create_access_token
 import requests
 from flask import request, jsonify, make_response
 from flask_restful import Resource
+import zlib
+from base64 import b64decode
+from itsdangerous import base64_decode
 from flask_api import status
 from marshmallow.exceptions import ValidationError
 from history_service import API
@@ -13,6 +17,29 @@ from history_service.utils.utils import save_into_db, delete_from_db
 from history_service.utils.utils import dump_history_object, create_error_dictionary
 from history_service.utils.utils import load_filter_object, load_history_object
 
+
+def decod(cookie):
+    """Функція декодування сесії в словник"""
+    try:
+        compressed = False
+        payload = cookie
+
+        if payload.startswith('.'):
+            compressed = True
+            payload = payload[1:]
+
+        data = payload.split(".")[0]
+
+        data = base64_decode(data)
+        if compressed:
+            data = zlib.decompress(data)
+
+        return data.decode("utf-8")
+    except Exception as e:
+        return "[Decoding error: are you sure this was a Flask session cookie? {}]".format(e)
+
+
+JWT_TOKEN = 'jwt_token'
 
 class HistoryResource(Resource):
     """History resource class."""
@@ -148,6 +175,20 @@ class UserHistoryResource(Resource):
         """
         try:
             # тут має бути отримання айдішки по сесії
+            sessione = request.cookies['session']
+            sessione_token = decod(sessione)
+            LOGGER.info("SESSIONE_TOKEN")
+            LOGGER.info(sessione_token)
+            LOGGER.info("SESSIONE_TOKEN['jwt_token']")
+            """В цьому місці шось ламається, хз чого. глянете
+            Не витягує значення з дікта чогось.
+            """
+            token = sessione_token.get(JWT_TOKEN)
+            LOGGER.info(token)
+            LOGGER.info("DECODE_TOKEN")
+            LOGGER.info(decode_token(token))
+
+
             user_id = 1
         except KeyError:
             LOGGER.error('There is not session in headers')
