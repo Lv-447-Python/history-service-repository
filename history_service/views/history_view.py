@@ -159,12 +159,22 @@ class HistoryRecordResource(Resource):
         Returns:
             History records in accordance to GET method arguments and query status.
         """
-        user_id = True
+
+        LOGGER.info(request.cookies)
+        session = request.cookies['session']
+        LOGGER.info(session)
+        token = decode_session_to_jwt(session)
+        LOGGER.info(token)
+        user_id = decode_token(token)['identity']
+
+        LOGGER.info("USER_ID %s", user_id)
+
         history_data = {
             'user_id': user_id,
             'file_id': file_id,
             'filter_id': filter_id
         }
+        LOGGER.info("HISTORY_DATA", history_data)
         history_object = History.query.filter_by(**history_data).first()
         if history_object:
             history_record = dump_history_object(history_object)
@@ -259,5 +269,5 @@ class FileHistoryResource(Resource):
 API.add_resource(HistoryResource, '/history')
 API.add_resource(UserHistoryResource, '/history/user')
 API.add_resource(FileHistoryResource, '/history/file/<int:file_id>')
-API.add_resource(HistoryRecordResource, '/history/user/<int:user_id>/file/<int:file_id>'
+API.add_resource(HistoryRecordResource, '/history/file/<int:file_id>'
                                         '/filter/<int:filter_id>')
