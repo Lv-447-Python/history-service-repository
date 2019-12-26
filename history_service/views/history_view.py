@@ -159,7 +159,7 @@ class UserHistoryResource(Resource):
         history_objects = History.query.filter_by(user_id=user_id).all()
         history = []
         for history_object in history_objects:
-            response = requests.get(f'http://web-file:5000/file/{history_object.file_id}')
+            response = requests.get(f'http://web-file:5000/file-service/api/file/{history_object.file_id}')
             if response.status_code != 200:
                 LOGGER.error('File service request error')
                 response_object = create_error_dictionary('File service request error')
@@ -212,8 +212,8 @@ class FileHistoryResource(Resource):
         return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
 
-API.add_resource(HistoryResource, '/history')
-API.add_resource(UserHistoryResource, '/history/user')
-API.add_resource(FileHistoryResource, '/history/file/<int:file_id>')
-API.add_resource(HistoryRecordResource, '/history/user/<int:user_id>/file/<int:file_id>'
-                                        '/filter/<int:filter_id>')
+API.add_resource(HistoryResource, '/history-service/api/history')
+API.add_resource(UserHistoryResource, '/history-service/api/history/user')
+API.add_resource(FileHistoryResource, '/history-service/api/history/file/<int:file_id>')
+API.add_resource(HistoryRecordResource, '/history-service/api/history/user/<int:user_id>/file/<int:file_id>'
+                                        '/history-service/api/filter/<int:filter_id>')

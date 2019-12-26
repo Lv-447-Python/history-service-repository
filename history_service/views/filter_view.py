@@ -45,5 +45,5 @@ class SingleFilterResource(Resource):
         return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
 
 
-API.add_resource(FiltersResource, '/filter')
-API.add_resource(SingleFilterResource, '/filter/<int:filter_id>')
+API.add_resource(FiltersResource, '/history-service/api/filter')
+API.add_resource(SingleFilterResource, '/history-service/api/filter/<int:filter_id>')
