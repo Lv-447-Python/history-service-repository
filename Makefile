@@ -1,34 +1,42 @@
-.PHONY: help setup init_db run test lint
+.PHONY: help setup_env setup_docker clean run_docker lint test coverage
 
 VENV_NAME?=env
-PYTHON=${VENV_NAME}/bin/python3
 MIGRATION_FOLDER?=migrations
+PYTHON_LOCAL=python
+PYTHON_ENV=${VENV_NAME}/bin/python
 
-setup: $(VENV_NAME)/bin/activate
-$(VENV_NAME)/bin/activate: requirements.txt
-	make clean
-	test -d $(VENV_NAME) || python3 -m virtualenv $(VENV_NAME)
-	mkdir files
-	${PYTHON} -m pip install -U pip
-	${PYTHON} -m pip install -r requirements.txt
-	make init_db
+.DEFAULT: help
+help: ## Show this help.
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-clean:
-	rm -rf $(VENV_NAME) $(MIGRATE_FOLDER)
+setup_env: $(VENV_NAME)/bin/activate ## Prepare virtual environment.
+$(VENV_NAME)/bin/activate: requirements.txt | clean
+	test -d $(VENV_NAME) || ${PYTHON_LOCAL} -m virtualenv $(VENV_NAME)
+	${PYTHON_ENV} -m pip install -U pip
+	${PYTHON_ENV} -m pip install -r requirements.txt
 
-init_db:
-	createdb -U postgres HistoryDB
-	${PYTHON} manage.py db init
-	${PYTHON} manage.py db upgrade
-	${PYTHON} manage.py db migrate
-	${PYTHON} manage.py db upgrade
+setup_docker: clean ## Prepare service in Docker container.
+	${PYTHON_LOCAL} -m pip install -U pip
+	${PYTHON_LOCAL} -m pip install -r requirements.txt
 
-lint:
-	${PYTHON} -m pylint history_service
+clean: ## Delete virtual environment and migration folders.
+	rm -rf $(VENV_NAME) $(MIGRATION_FOLDER)
 
-test:
-	${PYTHON} -m unittest
+run_docker:  | $(MIGRATION_FOLDER) ## Run service in Docker container.
+	${PYTHON_LOCAL} run.py
 
-coverage:
-	coverage run --omit venv\* -m unittest discover
-    coverage report -m
+$(MIGRATION_FOLDER):
+	${PYTHON_LOCAL} manage.py db init
+	${PYTHON_LOCAL} manage.py db upgrade
+	${PYTHON_LOCAL} manage.py db migrate
+	${PYTHON_LOCAL} manage.py db upgrade
+
+lint: ## Check code using pylint.
+	${PYTHON_ENV} -m pylint history_sevice
+
+test: ## Test service.
+	${PYTHON_LOCAL} -m unittest
+
+coverage: ## Run coverage for service.
+	${PYTHON_LOCAL} -m coverage run --omit env\* -m unittest discover
+	${PYTHON_LOCAL} -m coverage report -m
