@@ -1,12 +1,8 @@
 """Module for history resource."""
 import json
-from flask_jwt_extended import decode_token, create_access_token
 import requests
 from flask import request, jsonify, make_response
 from flask_restful import Resource
-import zlib
-from base64 import b64decode
-from itsdangerous import base64_decode
 from flask_api import status
 from marshmallow.exceptions import ValidationError
 from history_service import API
@@ -16,35 +12,8 @@ from history_service.models.filter_model import Filter
 from history_service.utils.utils import save_into_db, delete_from_db
 from history_service.utils.utils import dump_history_object, create_error_dictionary
 from history_service.utils.utils import load_filter_object, load_history_object
+from history_service.utils.utils import get_user_id_by_session
 
-
-def decode_session_to_jwt(cookie):
-    """Function to decode session to jwt_token"""
-    try:
-        compressed = False
-        payload = cookie
-
-        if payload.startswith('.'):
-            compressed = True
-            payload = payload[1:]
-
-        data = payload.split(".")[0]
-
-        data = base64_decode(data)
-        if compressed:
-            data = zlib.decompress(data)
-
-        data = data.decode("utf-8")
-        data = data.split('"jwt_token":"')[1]
-        data = data[:-2]
-        return data
-
-
-    except Exception as e:
-        return "[Decoding error: are you sure this was a Flask session cookie? {}]".format(e)
-
-
-JWT_TOKEN = 'jwt_token'
 
 class HistoryResource(Resource):
     """History resource class."""
@@ -85,19 +54,14 @@ class HistoryResource(Resource):
         history_record = request.get_json()
 
         try:
-            # тут має бути отримання айдішки по сесії
-            LOGGER.info(request.cookies)
             session = request.cookies['session']
-            LOGGER.info(session)
-            token = decode_session_to_jwt(session)
-            LOGGER.info(token)
-            user_id = decode_token(token)['identity']
-
-            LOGGER.info("USER_ID %s", user_id)
         except KeyError:
-            LOGGER.error('There is not session in headers')
-            response_object = create_error_dictionary('There is not session in headers')
-            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
+            LOGGER.error('There is not any session in headers')
+            response_object = create_error_dictionary('There is not session any in headers')
+            return make_response(jsonify(response_object), status.HTTP_403_FORBIDDEN)
+
+        user_id = get_user_id_by_session(session)
+
         try:
             history_value = {
                 'user_id': user_id,
@@ -150,8 +114,6 @@ class HistoryRecordResource(Resource):
         """
         Method for HTTP GET method working out. Used for getting history resources.
         Args:
-            user_id:
-                User identifier.
             file_id:
                 File identifier.
             filter_id:
@@ -160,21 +122,20 @@ class HistoryRecordResource(Resource):
             History records in accordance to GET method arguments and query status.
         """
 
-        LOGGER.info(request.cookies)
-        session = request.cookies['session']
-        LOGGER.info(session)
-        token = decode_session_to_jwt(session)
-        LOGGER.info(token)
-        user_id = decode_token(token)['identity']
+        try:
+            session = request.cookies['session']
+        except KeyError:
+            LOGGER.error('There is not any session in headers')
+            response_object = create_error_dictionary('There is not session any in headers')
+            return make_response(jsonify(response_object), status.HTTP_403_FORBIDDEN)
 
-        LOGGER.info("USER_ID %s", user_id)
+        user_id = get_user_id_by_session(session)
 
         history_data = {
             'user_id': user_id,
             'file_id': file_id,
             'filter_id': filter_id
         }
-        LOGGER.info("HISTORY_DATA", history_data)
         history_object = History.query.filter_by(**history_data).first()
         if history_object:
             history_record = dump_history_object(history_object)
@@ -191,25 +152,19 @@ class UserHistoryResource(Resource):
     def get(self):
         """
         Method for HTTP GET method working out. Used for getting history resources.
-        Args:
-            user_id:
-                User identifier.
         Returns:
             History records in accordance to GET method arguments and query status.
         """
         try:
-            # тут має бути отримання айдішки по сесії
             session = request.cookies['session']
-            token = decode_session_to_jwt(session)
-            user_id = decode_token(token)['identity']
-            LOGGER.info("USER_ID %s", user_id)
         except KeyError:
-            LOGGER.error('There is not session in headers')
-            response_object = create_error_dictionary('There is not session in headers')
-            return make_response(jsonify(response_object), status.HTTP_400_BAD_REQUEST)
-        history_data = {
-            'user_id': user_id
-        }
+            LOGGER.error('There is not any session in headers')
+            response_object = create_error_dictionary('There is not session any in headers')
+            return make_response(jsonify(response_object), status.HTTP_403_FORBIDDEN)
+
+        user_id = get_user_id_by_session(session)
+        LOGGER.info("USER_ID %s", user_id)
+
         history_objects = History.query.filter_by(user_id=user_id).all()
         history = []
         for history_object in history_objects:
@@ -217,18 +172,21 @@ class UserHistoryResource(Resource):
             if response.status_code != 200:
                 LOGGER.error('File service request error')
                 response_object = create_error_dictionary('File service request error')
-                return make_response(jsonify(response_object), status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return make_response(jsonify(response_object),
+                                     status.HTTP_500_INTERNAL_SERVER_ERROR)
             response_json = response.json()
             history_record = dump_history_object(history_object)
             try:
                 history_record['path'] = response_json['path']
                 filter_record = Filter.query.filter_by(filter_id=history_record['filter_id']).first()
-                history_record['filter'] = filter_record.filter_data
-                history.append(history_record)
             except KeyError as key_error:
-                LOGGER.error(f'File service response error, {key_error}')
+                LOGGER.error('File service response error, %s', key_error)
                 response_object = create_error_dictionary(f'File service response error, {key_error}')
-                return make_response(jsonify(response_object), status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return make_response(jsonify(response_object),
+                                     status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            history_record['filter'] = filter_record.filter_data
+            history.append(history_record)
         LOGGER.info('Successful request to UserHistoryResource')
         return make_response(jsonify(history), status.HTTP_200_OK)
 

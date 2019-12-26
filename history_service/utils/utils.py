@@ -1,5 +1,8 @@
 """Module for utils."""
 import json
+import zlib
+from itsdangerous import base64_decode
+from flask_jwt_extended import decode_token, create_access_token
 from history_service import DB
 from history_service.serializers.filter_serializer import FilterSchema
 from history_service.serializers.history_serializer import HistorySchema
@@ -99,3 +102,31 @@ def create_error_dictionary(message):
         'Error': message
     }
     return response_object
+
+def get_user_id_by_session(cookie):
+    """
+    Getting user id be session value.
+    Args:
+        cookie:
+            Consists session value.
+    Returns:
+        User id.
+    """
+    try:
+        compressed = False
+        payload = cookie
+        if payload.startswith('.'):
+            compressed = True
+            payload = payload[1:]
+        data = payload.split(".")[0]
+        data = base64_decode(data)
+        if compressed:
+            data = zlib.decompress(data)
+        data = data.decode("utf-8")
+        data = data.split('"jwt_token":"')[1]
+        data = data[:-2]
+        user_id = decode_token(data)['identity']
+        return user_id
+
+    except Exception:
+        return None
