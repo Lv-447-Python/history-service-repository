@@ -11,4 +11,4 @@ class History(DB.Model):
     filter_id = DB.Column(DB.Integer, primary_key=True)
     user_id = DB.Column(DB.Integer, primary_key=True)
     rows_id = DB.Column(DB.String, nullable=False)
-    filter_date = DB.Column(DB.DateTime, default=datetime.datetime.utcnow())
+    filter_date = DB.Column(DB.DateTime, default=datetime.datetime.utcnow)
